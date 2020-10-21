@@ -1,69 +1,53 @@
 package ru.flendger.game.screen;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import ru.flendger.game.base.BaseScreen;
+import ru.flendger.game.math.Rect;
+import ru.flendger.game.sprite.Background;
+import ru.flendger.game.sprite.Cosmo;
 
 public class MenuScreen extends BaseScreen {
-    private Texture img;
+    private Background background;
+    private Texture bg;
+    private Cosmo cosmo;
     private Texture cosmoImg;
-    private Vector2 pos = new Vector2(100, 0);
-    private Vector2 lastTouch = new Vector2(0, 0);
-    private Vector2 v = new Vector2(0, 0);
-    private int scrWidth;
-    private int scrHeight;
-    private float xCosmo;
-    private float yCosmo;
-    private float sclSpeed = 5;
 
     @Override
     public void show() {
         super.show();
-        img = new Texture("background.jpg");
-        cosmoImg = new Texture("cosmo.png");
-        scrWidth = Gdx.graphics.getWidth();
-        scrHeight = Gdx.graphics.getHeight();
-        xCosmo = scrWidth/5.4f;
-        yCosmo = scrHeight/6;
+        bg = new Texture("textures/background.jpg");
+        background = new Background(new TextureRegion(bg));
+        cosmoImg = new Texture("textures/cosmo.png");
+        cosmo = new Cosmo(new TextureRegion(cosmoImg));
     }
 
     @Override
     public void render(float delta) {
         super.render(delta);
         batch.begin();
-        batch.draw(img, 0, 0, scrWidth, scrHeight);
-        batch.draw(cosmoImg, pos.x, pos.y, xCosmo, yCosmo);
+        background.draw(batch);
+        cosmo.draw(batch);
         batch.end();
+    }
 
-        if (v.isZero()) {
-            return;
-        }
-
-        pos.add(v);
-        Vector2 distance = new Vector2(lastTouch);
-        distance.sub(pos);
-        if (distance.len() <= sclSpeed) {
-            v.setZero();
-        }
+    @Override
+    public void resize(Rect worldBounds) {
+        background.resize(worldBounds);
+        cosmo.resize(worldBounds);
     }
 
     @Override
     public void dispose() {
-        super.dispose();
-        img.dispose();
+        bg.dispose();
         cosmoImg.dispose();
+        super.dispose();
     }
 
     @Override
-    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        lastTouch.set(screenX, Gdx.graphics.getHeight()-screenY);
-        lastTouch.sub(xCosmo/2, yCosmo/2);
-        v.set(lastTouch);
-        v.sub(pos);
-        v.nor();
-        v.scl(sclSpeed);
-
-        return super.touchDown(screenX, screenY, pointer, button);
+    public boolean touchDown(Vector2 touch, int pointer, int button) {
+        cosmo.touchDown(touch, pointer, button);
+        return super.touchDown(touch, pointer, button);
     }
 }
