@@ -17,6 +17,14 @@ public class Sprite extends Rect {
         this.regions[frame] = region;
     }
 
+    public Sprite(TextureRegion region, int devider) {
+        this.regions = new TextureRegion[devider];
+        for (int i = 0; i < devider; i++) {
+            this.regions[i] = new TextureRegion(region, region.getRegionWidth()- region.getRegionWidth()/(i+1), 0, region.getRegionWidth()/devider, region.getRegionHeight());
+        }
+        this.frame = devider-1;
+    }
+
     public void setHeightProportion(float height) {
         setHeight(height);
         float aspect = regions[frame].getRegionWidth() / (float) regions[frame].getRegionHeight();

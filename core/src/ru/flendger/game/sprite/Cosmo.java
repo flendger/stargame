@@ -1,7 +1,6 @@
 package ru.flendger.game.sprite;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
 import ru.flendger.game.base.Sprite;
 import ru.flendger.game.math.Rect;
@@ -12,18 +11,19 @@ public class Cosmo extends Sprite {
     private final Vector2 lastTouch;
     private final Vector2 tmp;
 
-    public Cosmo(TextureRegion region) {
-        super(region);
+    public Cosmo(TextureAtlas atlas) {
+        super(atlas.findRegion("main_ship"), 2);
+
         this.v = new Vector2();
         this.lastTouch = new Vector2();
         this.tmp = new Vector2();
     }
 
     @Override
-    public void draw(SpriteBatch batch) {
-        super.draw(batch);
+    public void update(float delta) {
+        super.update(delta);
         tmp.set(lastTouch);
-        if (tmp.sub(pos).len() <= v.len()) {
+        if (tmp.sub(pos).len() <= FIX_SPEED) {
             pos.set(lastTouch);
             v.setZero();
         } else {
