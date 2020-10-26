@@ -72,13 +72,23 @@ public class GameScreen extends BaseScreen {
 
     @Override
     public boolean keyDown(int keycode) {
+        for (Sprite s: sprites
+        ) {
+            s.keyDown(keycode);
+        }
         return super.keyDown(keycode);
     }
 
     @Override
     public boolean keyUp(int keycode) {
+        for (Sprite s: sprites
+        ) {
+            s.keyUp(keycode);
+        }
         return super.keyUp(keycode);
     }
+
+
 
     @Override
     public boolean touchDown(Vector2 touch, int pointer, int button) {
