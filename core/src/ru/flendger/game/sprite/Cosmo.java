@@ -1,6 +1,7 @@
 package ru.flendger.game.sprite;
 
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
@@ -16,8 +17,9 @@ public class Cosmo extends Sprite {
     private final BulletPool bulletPool;
     private final TextureRegion bulletRegion;
     private final int MAX_BULLETS = 15;
-    private final float deltaShoot = 0.1f;
+    private final float deltaShoot = 0.25f;
     private float curDeltaShoot = 0;
+    private final Sound shootSound;
 
     private int curDirection = 0;
     private final int INVALID_POINTER = -1;
@@ -27,10 +29,11 @@ public class Cosmo extends Sprite {
     private final Vector2 bulletPos = new Vector2();
 
 
-    public Cosmo(TextureAtlas atlas, BulletPool bulletPool) {
+    public Cosmo(TextureAtlas atlas, BulletPool bulletPool, Sound shootSound) {
         super(atlas.findRegion("main_ship"), 1, 2, 2);
         this.bulletPool = bulletPool;
         this.bulletRegion = atlas.findRegion("bulletMainShip");
+        this.shootSound = shootSound;
     }
 
     @Override
@@ -144,6 +147,7 @@ public class Cosmo extends Sprite {
         Bullet bullet = bulletPool.obtain();
         bulletPos.set(pos.x, getTop());
         bullet.set(this, bulletRegion, bulletPos, bulletV, worldBounds, 1, 0.01f);
+        shootSound.play();
     }
 
 }

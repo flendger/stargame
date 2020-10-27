@@ -1,5 +1,7 @@
 package ru.flendger.game.screen;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
@@ -22,6 +24,7 @@ public class GameScreen extends BaseScreen {
     private TextureAtlas atlas;
     private Texture bg;
     private BulletPool bulletPool;
+    private Sound shootSound;
 
     private List<Disposable> toDispose;
     private List<Sprite> sprites;
@@ -45,7 +48,10 @@ public class GameScreen extends BaseScreen {
             sprites.add(new Star(atlas));
         }
 
-        sprites.add(new Cosmo(atlas, bulletPool));
+        shootSound = Gdx.audio.newSound(Gdx.files.internal("sounds/bullet.wav"));
+        toDispose.add(shootSound);
+
+        sprites.add(new Cosmo(atlas, bulletPool,shootSound));
     }
 
     @Override

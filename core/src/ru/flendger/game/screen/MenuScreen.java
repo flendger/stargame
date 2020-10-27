@@ -1,6 +1,8 @@
 package ru.flendger.game.screen;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
@@ -22,6 +24,7 @@ public class MenuScreen extends BaseScreen {
 
     private Texture bg;
     private TextureAtlas atlas;
+    private Music music;
 
     private List<Disposable> toDispose;
     private List<Sprite> sprites;
@@ -49,6 +52,12 @@ public class MenuScreen extends BaseScreen {
         for (int i = 0; i < STAR_COUNTER; i++) {
             sprites.add(new Star(atlas));
         }
+
+        music = Gdx.audio.newMusic(Gdx.files.internal("sounds/music.mp3"));
+        toDispose.add(music);
+        music.setLooping(true);
+        music.setVolume(0.5f);
+        music.play();
     }
 
     @Override
