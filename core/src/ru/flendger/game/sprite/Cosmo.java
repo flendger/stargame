@@ -16,7 +16,7 @@ public class Cosmo extends Sprite {
     private int rightPointer = INVALID_POINTER;
 
     public Cosmo(TextureAtlas atlas) {
-        super(atlas.findRegion("main_ship"), 2);
+        super(atlas.findRegion("main_ship"), 1, 2, 2);
 
         this.v = new Vector2();
     }

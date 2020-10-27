@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import ru.flendger.game.math.Rect;
+import ru.flendger.game.util.Regions;
 
 public class Sprite extends Rect {
     protected float angle;
@@ -17,12 +18,8 @@ public class Sprite extends Rect {
         this.regions[frame] = region;
     }
 
-    public Sprite(TextureRegion region, int devider) {
-        this.regions = new TextureRegion[devider];
-        for (int i = 0; i < devider; i++) {
-            this.regions[i] = new TextureRegion(region, region.getRegionWidth()- region.getRegionWidth()/(i+1), 0, region.getRegionWidth()/devider, region.getRegionHeight());
-        }
-        this.frame = devider-1;
+    public Sprite(TextureRegion region, int rows, int cols, int frames) {
+        this.regions = Regions.split(region, rows, cols, frames);
     }
 
     public void setHeightProportion(float height) {
