@@ -2,23 +2,32 @@ package ru.flendger.game.sprite;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import ru.flendger.game.base.Sprite;
 import ru.flendger.game.math.Rect;
+import ru.flendger.game.pool.BulletPool;
 
 public class Cosmo extends Sprite {
     private final float FIX_SPEED = 0.0055f;
-    private final Vector2 v;
+    private final Vector2 v = new Vector2();
+
     private Rect worldBounds;
+    private final BulletPool bulletPool;
+    private final TextureRegion bulletRegion;
+
     private int curDirection = 0;
     private final int INVALID_POINTER = -1;
     private int leftPointer = INVALID_POINTER;
     private int rightPointer = INVALID_POINTER;
+    private final Vector2 bulletV = new Vector2(0, 0.5f);
+    private final Vector2 bulletPos = new Vector2();
 
-    public Cosmo(TextureAtlas atlas) {
+
+    public Cosmo(TextureAtlas atlas, BulletPool bulletPool) {
         super(atlas.findRegion("main_ship"), 1, 2, 2);
-
-        this.v = new Vector2();
+        this.bulletPool = bulletPool;
+        this.bulletRegion = atlas.findRegion("bulletMainShip");
     }
 
     @Override
@@ -99,6 +108,9 @@ public class Cosmo extends Sprite {
             case (Input.Keys.RIGHT):
                 moveRight();
                 break;
+            case Input.Keys.UP:
+                shoot();
+                break;
         }
         return super.keyDown(keycode);
     }
@@ -117,4 +129,11 @@ public class Cosmo extends Sprite {
         v.setZero();
         curDirection = 0;
     }
+
+    private void shoot() {
+        Bullet bullet = bulletPool.obtain();
+        bulletPos.set(pos.x, getTop());
+        bullet.set(this, bulletRegion, bulletPos, bulletV, worldBounds, 1, 0.01f);
+    }
+
 }
