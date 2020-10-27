@@ -15,6 +15,9 @@ public class Cosmo extends Sprite {
     private Rect worldBounds;
     private final BulletPool bulletPool;
     private final TextureRegion bulletRegion;
+    private final int MAX_BULLETS = 15;
+    private final float deltaShoot = 0.1f;
+    private float curDeltaShoot = 0;
 
     private int curDirection = 0;
     private final int INVALID_POINTER = -1;
@@ -40,6 +43,13 @@ public class Cosmo extends Sprite {
         } else if (getRight() >= worldBounds.getRight()) {
             setRight(worldBounds.getRight());
             stop();
+        }
+        if (bulletPool.getActiveObjects().size() < MAX_BULLETS) {
+            curDeltaShoot += delta;
+            if (curDeltaShoot >= deltaShoot) {
+                shoot();
+                curDeltaShoot = 0;
+            }
         }
     }
 

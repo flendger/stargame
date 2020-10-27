@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SpritesPool<T extends Sprite> implements Disposable {
-
     protected final List<T> activeObjects = new ArrayList<T>();
     protected final List<T> freeObjects = new ArrayList<T>();
+
 
     protected abstract T newObject();
 
