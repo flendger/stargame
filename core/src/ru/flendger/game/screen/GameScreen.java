@@ -1,7 +1,5 @@
 package ru.flendger.game.screen;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
@@ -10,21 +8,22 @@ import ru.flendger.game.base.BaseScreen;
 import ru.flendger.game.base.Sprite;
 import ru.flendger.game.math.Rect;
 import ru.flendger.game.pool.BulletPool;
+import ru.flendger.game.pool.EnemyShipPool;
 import ru.flendger.game.sprite.Background;
 import ru.flendger.game.sprite.Cosmo;
 import ru.flendger.game.sprite.Star;
+import ru.flendger.game.util.EnemyEmitter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GameScreen extends BaseScreen {
-
     private static final int STAR_COUNT = 64;
 
-    private TextureAtlas atlas;
-    private Texture bg;
     private BulletPool bulletPool;
-    private Sound shootSound;
+    private EnemyShipPool enemyShipPool;
+    private Cosmo cosmo;
+    private EnemyEmitter enemyEmitter;
 
     private List<Disposable> toDispose;
     private List<Sprite> sprites;
@@ -35,23 +34,28 @@ public class GameScreen extends BaseScreen {
         sprites = new ArrayList<>();
         toDispose = new ArrayList<>();
 
-        atlas = new TextureAtlas("textures/mainAtlas.tpack");
+        TextureAtlas atlas = new TextureAtlas("textures/mainAtlas.tpack");
         toDispose.add(atlas);
-        bg = new Texture("textures/bg.png");
+        Texture bg = new Texture("textures/bg.png");
         toDispose.add(bg);
-
-        bulletPool = new BulletPool();
-        toDispose.add(bulletPool);
 
         sprites.add(new Background(bg));
         for (int i = 0; i < STAR_COUNT; i++) {
             sprites.add(new Star(atlas));
         }
 
-        shootSound = Gdx.audio.newSound(Gdx.files.internal("sounds/bullet.wav"));
-        toDispose.add(shootSound);
+        bulletPool = new BulletPool();
+        toDispose.add(bulletPool);
 
-        sprites.add(new Cosmo(atlas, bulletPool,shootSound));
+        enemyShipPool = new EnemyShipPool(bulletPool, worldBounds);
+        toDispose.add(enemyShipPool);
+
+        enemyEmitter = new EnemyEmitter(atlas, enemyShipPool, worldBounds);
+        toDispose.add(enemyEmitter);
+
+        cosmo = new Cosmo(atlas, bulletPool, worldBounds);
+        sprites.add(cosmo);
+        toDispose.add(cosmo);
     }
 
     @Override
@@ -60,7 +64,7 @@ public class GameScreen extends BaseScreen {
         update(delta);
         checkCollision();
         freeAllDestroyed();
-        draw(delta);
+        draw();
     }
 
     @Override
@@ -123,23 +127,26 @@ public class GameScreen extends BaseScreen {
             s.update(delta);
         }
         bulletPool.updateActiveSprites(delta);
+        enemyShipPool.updateActiveSprites(delta);
+        enemyEmitter.generate(delta);
+    }
+
+    private void freeAllDestroyed() {
+        bulletPool.freeAllDestroyedActiveSprites();
+        enemyShipPool.freeAllDestroyedActiveSprites();
     }
 
     private void checkCollision() {
     }
 
-    private void freeAllDestroyed() {
-        bulletPool.freeAllDestroyedActiveSprites();
-    }
-
-
-    private void draw(float delta) {
+    private void draw() {
         batch.begin();
         for (Sprite s: sprites
         ) {
             s.draw(batch);
         }
         bulletPool.drawActiveSprites(batch);
+        enemyShipPool.drawActiveSprites(batch);
         batch.end();
     }
 }

@@ -1,45 +1,47 @@
 package ru.flendger.game.sprite;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-import ru.flendger.game.base.Sprite;
+import ru.flendger.game.base.BaseShip;
 import ru.flendger.game.math.Rect;
 import ru.flendger.game.pool.BulletPool;
 
-public class Cosmo extends Sprite {
-    private final float FIX_SPEED = 0.0055f;
-    private final Vector2 v = new Vector2();
-
-    private Rect worldBounds;
-    private final BulletPool bulletPool;
-    private final TextureRegion bulletRegion;
-    private final int MAX_BULLETS = 15;
-    private final float deltaShoot = 0.25f;
-    private float curDeltaShoot = 0;
-    private final Sound shootSound;
+public class Cosmo extends BaseShip {
+    private final float FIX_SPEED = 0.5f;
 
     private int curDirection = 0;
     private final int INVALID_POINTER = -1;
     private int leftPointer = INVALID_POINTER;
     private int rightPointer = INVALID_POINTER;
-    private final Vector2 bulletV = new Vector2(0, 0.5f);
-    private final Vector2 bulletPos = new Vector2();
 
 
-    public Cosmo(TextureAtlas atlas, BulletPool bulletPool, Sound shootSound) {
-        super(atlas.findRegion("main_ship"), 1, 2, 2);
-        this.bulletPool = bulletPool;
-        this.bulletRegion = atlas.findRegion("bulletMainShip");
-        this.shootSound = shootSound;
+    public Cosmo(TextureAtlas atlas, BulletPool bulletPool, Rect worldBounds) {
+        super(atlas.findRegion("main_ship"),
+                1, 2, 2,
+                bulletPool,
+                atlas.findRegion("bulletMainShip"),
+                Gdx.audio.newSound(Gdx.files.internal("sounds/laser.wav")),
+                worldBounds);
+        reloadDelta = 0.25f;
+        bulletV.set(0, 0.5f);
+        bulletDamage = 1;
+        bulletHeight = 0.01f;
+        hp = 100;
     }
 
     @Override
     public void update(float delta) {
+        bulletPos.set(pos.x, getTop());
         super.update(delta);
-        pos.add(v);
+
+        curDeltaShoot += delta;
+        if (curDeltaShoot >= reloadDelta) {
+            shoot();
+            curDeltaShoot = 0;
+        }
+
         if (getLeft() <= worldBounds.getLeft()) {
             setLeft(worldBounds.getLeft());
             stop();
@@ -47,19 +49,11 @@ public class Cosmo extends Sprite {
             setRight(worldBounds.getRight());
             stop();
         }
-        if (bulletPool.getActiveObjects().size() < MAX_BULLETS) {
-            curDeltaShoot += delta;
-            if (curDeltaShoot >= deltaShoot) {
-                shoot();
-                curDeltaShoot = 0;
-            }
-        }
     }
 
     @Override
     public void resize(Rect worldBounds) {
-        this.worldBounds = worldBounds;
-        setHeightProportion(0.2f * worldBounds.getHeight());
+        setHeightProportion(0.15f * worldBounds.getHeight());
         pos.set(0, worldBounds.getBottom()+getHalfHeight());
     }
 
@@ -142,12 +136,4 @@ public class Cosmo extends Sprite {
         v.setZero();
         curDirection = 0;
     }
-
-    private void shoot() {
-        Bullet bullet = bulletPool.obtain();
-        bulletPos.set(pos.x, getTop());
-        bullet.set(this, bulletRegion, bulletPos, bulletV, worldBounds, 1, 0.01f);
-        shootSound.play();
-    }
-
 }
