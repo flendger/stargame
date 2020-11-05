@@ -27,6 +27,5 @@ public class EnemySmallSettingsDto extends EnemySettingsDto {
         setReloadInterval(ENEMY_SMALL_RELOAD_INTERVAL);
         setHeight(ENEMY_SMALL_HEIGHT);
         setHp(ENEMY_SMALL_HP);
-        setAcceleration(1f);
     }
 }

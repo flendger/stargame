@@ -4,33 +4,25 @@ import ru.flendger.game.base.BaseShip;
 import ru.flendger.game.base.EnemySettingsDto;
 import ru.flendger.game.math.Rect;
 import ru.flendger.game.pool.BulletPool;
+import ru.flendger.game.pool.ExplosionPool;
 
 public class EnemyShip extends BaseShip {
-    private boolean beginShoot = false;
-    private float acceleration;
 
-    public EnemyShip(BulletPool bulletPool, Rect worldBounds) {
-        super(bulletPool, worldBounds);
+    private static final float START_V_Y = -0.3f;
+
+    public EnemyShip(BulletPool bulletPool, ExplosionPool explosionPool, Rect worldBounds) {
+        super(bulletPool, explosionPool, worldBounds);
     }
 
     @Override
     public void update(float delta) {
         bulletPos.set(pos.x, getBottom());
 
-        curDeltaShoot += delta;
+        super.update(delta);
         if (getTop() <= worldBounds.getTop()) {
-            super.update(delta);
-            if (!beginShoot) {
-                curDeltaShoot = reloadDelta;
-                beginShoot = true;
-            }
-
-            if (beginShoot && curDeltaShoot >= reloadDelta) {
-                shoot();
-                curDeltaShoot = 0;
-            }
+            v.set(v0);
         } else {
-            super.update(delta * acceleration);
+            curDeltaShoot = reloadDelta - delta * 2;
         }
 
         if (getTop() < worldBounds.getBottom()) {
@@ -40,7 +32,7 @@ public class EnemyShip extends BaseShip {
 
     public void set(EnemySettingsDto settings) {
         this.regions = settings.getRegions();
-        this.v.set(settings.getV0());
+        this.v0.set(settings.getV0());
         this.bulletRegion = settings.getBulletRegion();
         this.bulletHeight = settings.getBulletHeight();
         this.bulletV.set(settings.getBulletV());
@@ -49,12 +41,16 @@ public class EnemyShip extends BaseShip {
         this.reloadDelta = settings.getReloadInterval();
         setHeightProportion(settings.getHeight());
         this.hp = settings.getHp();
-        this.acceleration = settings.getAcceleration();
+        this.curDeltaShoot = 0f;
+        this.v.set(0, START_V_Y);
     }
 
-    @Override
-    public void destroy() {
-        super.destroy();
-        beginShoot = false;
+    public boolean isBulletCollision(Rect bullet) {
+        return !(
+                bullet.getRight() < getLeft()
+                        || bullet.getLeft() > getRight()
+                        || bullet.getBottom() > getTop()
+                        || bullet.getTop() < pos.y
+        );
     }
 }

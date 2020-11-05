@@ -16,15 +16,7 @@ public abstract class EnemySettingsDto {
     private float reloadInterval;
     private float height;
     private int hp;
-    private float acceleration;
 
-    public float getAcceleration() {
-        return acceleration;
-    }
-
-    public void setAcceleration(float acceleration) {
-        this.acceleration = acceleration;
-    }
 
     public TextureRegion[] getRegions() {
         return regions;

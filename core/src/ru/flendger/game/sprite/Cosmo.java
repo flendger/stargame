@@ -7,40 +7,33 @@ import com.badlogic.gdx.math.Vector2;
 import ru.flendger.game.base.BaseShip;
 import ru.flendger.game.math.Rect;
 import ru.flendger.game.pool.BulletPool;
+import ru.flendger.game.pool.ExplosionPool;
 
 public class Cosmo extends BaseShip {
+
     private final float FIX_SPEED = 0.5f;
-
-    private int curDirection = 0;
     private final int INVALID_POINTER = -1;
-    private int leftPointer = INVALID_POINTER;
-    private int rightPointer = INVALID_POINTER;
+
+    private int curDirection;
+    private int leftPointer;
+    private int rightPointer;
 
 
-    public Cosmo(TextureAtlas atlas, BulletPool bulletPool, Rect worldBounds) {
+    public Cosmo(TextureAtlas atlas, BulletPool bulletPool, ExplosionPool explosionPool, Rect worldBounds) {
         super(atlas.findRegion("main_ship"),
                 1, 2, 2,
                 bulletPool,
+                explosionPool,
                 atlas.findRegion("bulletMainShip"),
                 Gdx.audio.newSound(Gdx.files.internal("sounds/laser.wav")),
                 worldBounds);
-        reloadDelta = 0.25f;
-        bulletV.set(0, 0.5f);
-        bulletDamage = 1;
-        bulletHeight = 0.01f;
-        hp = 100;
+        loadDefaults();
     }
 
     @Override
     public void update(float delta) {
         bulletPos.set(pos.x, getTop());
         super.update(delta);
-
-        curDeltaShoot += delta;
-        if (curDeltaShoot >= reloadDelta) {
-            shoot();
-            curDeltaShoot = 0;
-        }
 
         if (getLeft() <= worldBounds.getLeft()) {
             setLeft(worldBounds.getLeft());
@@ -54,7 +47,7 @@ public class Cosmo extends BaseShip {
     @Override
     public void resize(Rect worldBounds) {
         setHeightProportion(0.15f * worldBounds.getHeight());
-        pos.set(0, worldBounds.getBottom()+getHalfHeight());
+        setStartPosition();
     }
 
     @Override
@@ -135,5 +128,34 @@ public class Cosmo extends BaseShip {
     private void stop() {
         v.setZero();
         curDirection = 0;
+    }
+
+    public boolean isBulletCollision(Rect bullet) {
+        return !(
+                bullet.getRight() < getLeft()
+                        || bullet.getLeft() > getRight()
+                        || bullet.getBottom() > pos.y
+                        || bullet.getTop() < getBottom()
+        );
+    }
+
+    private void setStartPosition() {
+        pos.set(0, worldBounds.getBottom()+getHalfHeight());
+    }
+
+    @Override
+    public void loadDefaults() {
+        super.loadDefaults();
+        curDirection = 0;
+        leftPointer = INVALID_POINTER;
+        rightPointer = INVALID_POINTER;
+        v.setZero();
+        reloadDelta = 0.25f;
+        bulletV.set(0, 0.5f);
+        bulletDamage = 1;
+        bulletHeight = 0.01f;
+        hp = 30;
+        setStartPosition();
+        flushDestroy();
     }
 }
