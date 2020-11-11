@@ -27,6 +27,5 @@ public class EnemyMediumSettingsDto extends EnemySettingsDto {
         setReloadInterval(ENEMY_MEDIUM_RELOAD_INTERVAL);
         setHeight(ENEMY_MEDIUM_HEIGHT);
         setHp(ENEMY_MEDIUM_HP);
-        setAcceleration(2.5f);
     }
 }

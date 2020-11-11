@@ -1,5 +1,6 @@
 package ru.flendger.game.screen;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
@@ -9,9 +10,8 @@ import ru.flendger.game.base.Sprite;
 import ru.flendger.game.math.Rect;
 import ru.flendger.game.pool.BulletPool;
 import ru.flendger.game.pool.EnemyShipPool;
-import ru.flendger.game.sprite.Background;
-import ru.flendger.game.sprite.Cosmo;
-import ru.flendger.game.sprite.Star;
+import ru.flendger.game.pool.ExplosionPool;
+import ru.flendger.game.sprite.*;
 import ru.flendger.game.util.EnemyEmitter;
 
 import java.util.ArrayList;
@@ -19,20 +19,29 @@ import java.util.List;
 
 public class GameScreen extends BaseScreen {
     private static final int STAR_COUNT = 64;
+    private static final float EXIT_INTERVAL = 1f;
 
     private BulletPool bulletPool;
     private EnemyShipPool enemyShipPool;
+    private ExplosionPool explosionPool;
     private Cosmo cosmo;
     private EnemyEmitter enemyEmitter;
+    private GameOverMessage gameOverMessage;
+    private NewGameButton newGameButton;
 
-    private List<Disposable> toDispose;
-    private List<Sprite> sprites;
+    private final List<Disposable> toDispose;
+    private final List<Sprite> sprites;
+
+    private float exitTimer;
+
+    public GameScreen() {
+        this.sprites = new ArrayList<>();
+        this.toDispose = new ArrayList<>();
+    }
 
     @Override
     public void show() {
         super.show();
-        sprites = new ArrayList<>();
-        toDispose = new ArrayList<>();
 
         TextureAtlas atlas = new TextureAtlas("textures/mainAtlas.tpack");
         toDispose.add(atlas);
@@ -44,18 +53,36 @@ public class GameScreen extends BaseScreen {
             sprites.add(new Star(atlas));
         }
 
+        gameOverMessage = new GameOverMessage(atlas);
+        gameOverMessage.destroy();
+        sprites.add(gameOverMessage);
+
+        newGameButton = new NewGameButton(atlas, this);
+        newGameButton.destroy();
+        sprites.add(newGameButton);
+
         bulletPool = new BulletPool();
         toDispose.add(bulletPool);
 
-        enemyShipPool = new EnemyShipPool(bulletPool, worldBounds);
+        explosionPool = new ExplosionPool(atlas);
+        toDispose.add(explosionPool);
+
+        enemyShipPool = new EnemyShipPool(bulletPool, explosionPool, worldBounds);
         toDispose.add(enemyShipPool);
 
         enemyEmitter = new EnemyEmitter(atlas, enemyShipPool, worldBounds);
         toDispose.add(enemyEmitter);
 
-        cosmo = new Cosmo(atlas, bulletPool, worldBounds);
+        cosmo = new Cosmo(atlas, bulletPool, explosionPool, worldBounds);
         sprites.add(cosmo);
         toDispose.add(cosmo);
+    }
+
+    public void startGame() {
+        gameOverMessage.destroy();
+        newGameButton.destroy();
+        cosmo.loadDefaults();
+        exitTimer = 0f;
     }
 
     @Override
@@ -83,6 +110,7 @@ public class GameScreen extends BaseScreen {
             d.dispose();
         }
         super.dispose();
+        toDispose.clear();
     }
 
     @Override
@@ -124,29 +152,87 @@ public class GameScreen extends BaseScreen {
     private void update(float delta) {
         for (Sprite s: sprites
         ) {
-            s.update(delta);
+            if (!s.isDestroyed()) {
+                s.update(delta);
+            }
         }
-        bulletPool.updateActiveSprites(delta);
+        if (cosmo.getHp() <= 0) {
+            enemyShipPool.dispose();
+            bulletPool.dispose();
+            exitTimer += delta;
+            if (exitTimer >= EXIT_INTERVAL) {
+                gameOverMessage.flushDestroy();
+                newGameButton.flushDestroy();
+            }
+        } else {
+            enemyEmitter.generate(delta);
+        }
         enemyShipPool.updateActiveSprites(delta);
-        enemyEmitter.generate(delta);
+        bulletPool.updateActiveSprites(delta);
+        explosionPool.updateActiveSprites(delta);
     }
 
     private void freeAllDestroyed() {
         bulletPool.freeAllDestroyedActiveSprites();
         enemyShipPool.freeAllDestroyedActiveSprites();
+        explosionPool.freeAllDestroyedActiveSprites();
     }
 
     private void checkCollision() {
+        List<EnemyShip> enemyShips = enemyShipPool.getActiveObjects();
+        for (EnemyShip enemyShip: enemyShips
+             ) {
+            if (enemyShip.isDestroyed()) {
+                continue;
+            }
+
+            float minDist = cosmo.getHalfWidth() + enemyShip.getHalfWidth();
+            if (enemyShip.pos.dst(cosmo.pos) < minDist) {
+                cosmo.damage(enemyShip.getBulletDamage());
+                enemyShip.destroy();
+            }
+        }
+
+        List<Bullet> bullets = bulletPool.getActiveObjects();
+        for (Bullet bullet: bullets
+             ) {
+            if (bullet.isDestroyed()) {
+                continue;
+            }
+
+            if (bullet.getOwner() != cosmo) {
+                if (cosmo.isBulletCollision(bullet)) {
+                    bullet.destroy();
+                    cosmo.damage(bullet.getDamage());
+                }
+            } else {
+                for (EnemyShip enemyShip: enemyShips
+                     ) {
+                    if (enemyShip.isDestroyed()) {
+                        continue;
+                    }
+
+                    if (enemyShip.isBulletCollision(bullet)){
+                        bullet.destroy();
+                        enemyShip.damage(cosmo.getBulletDamage());
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     private void draw() {
         batch.begin();
         for (Sprite s: sprites
         ) {
-            s.draw(batch);
+            if (!s.isDestroyed()) {
+                s.draw(batch);
+            }
         }
-        bulletPool.drawActiveSprites(batch);
         enemyShipPool.drawActiveSprites(batch);
+        bulletPool.drawActiveSprites(batch);
+        explosionPool.drawActiveSprites(batch);
         batch.end();
     }
 }
