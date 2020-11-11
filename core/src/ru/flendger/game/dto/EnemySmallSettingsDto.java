@@ -28,4 +28,9 @@ public class EnemySmallSettingsDto extends EnemySettingsDto {
         setHeight(ENEMY_SMALL_HEIGHT);
         setHp(ENEMY_SMALL_HP);
     }
+
+    @Override
+    public void setDamageForLevel(int level) {
+        setDamage(ENEMY_SMALL_DAMAGE * level);
+    }
 }

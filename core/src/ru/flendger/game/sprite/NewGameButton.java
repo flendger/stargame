@@ -1,5 +1,6 @@
 package ru.flendger.game.sprite;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import ru.flendger.game.base.BaseButton;
 import ru.flendger.game.math.Rect;
@@ -18,6 +19,14 @@ public class NewGameButton extends BaseButton {
     @Override
     public void action() {
         gameScreen.startGame();
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        if (keycode == Input.Keys.SPACE) {
+            action();
+        }
+        return super.keyUp(keycode);
     }
 
     @Override

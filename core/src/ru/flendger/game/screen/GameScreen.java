@@ -1,9 +1,9 @@
 package ru.flendger.game.screen;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Disposable;
 import ru.flendger.game.base.BaseScreen;
 import ru.flendger.game.base.Sprite;
@@ -13,6 +13,7 @@ import ru.flendger.game.pool.EnemyShipPool;
 import ru.flendger.game.pool.ExplosionPool;
 import ru.flendger.game.sprite.*;
 import ru.flendger.game.util.EnemyEmitter;
+import ru.flendger.game.util.Font;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,13 @@ import java.util.List;
 public class GameScreen extends BaseScreen {
     private static final int STAR_COUNT = 64;
     private static final float EXIT_INTERVAL = 1f;
+
+    private static final float FONT_SIZE = 0.02f;
+    private static final float MARGIN = 0.01f;
+
+    private static final String FRAGS = "FRAGS: ";
+    private static final String HP = "HP: ";
+    private static final String LEVEL = "LEVEL: ";
 
     private BulletPool bulletPool;
     private EnemyShipPool enemyShipPool;
@@ -33,6 +41,13 @@ public class GameScreen extends BaseScreen {
     private final List<Sprite> sprites;
 
     private float exitTimer;
+
+    private int frags;
+
+    private Font font;
+    private StringBuilder sbFrags;
+    private StringBuilder sbHp;
+    private StringBuilder sbLevel;
 
     public GameScreen() {
         this.sprites = new ArrayList<>();
@@ -49,17 +64,6 @@ public class GameScreen extends BaseScreen {
         toDispose.add(bg);
 
         sprites.add(new Background(bg));
-        for (int i = 0; i < STAR_COUNT; i++) {
-            sprites.add(new Star(atlas));
-        }
-
-        gameOverMessage = new GameOverMessage(atlas);
-        gameOverMessage.destroy();
-        sprites.add(gameOverMessage);
-
-        newGameButton = new NewGameButton(atlas, this);
-        newGameButton.destroy();
-        sprites.add(newGameButton);
 
         bulletPool = new BulletPool();
         toDispose.add(bulletPool);
@@ -76,6 +80,25 @@ public class GameScreen extends BaseScreen {
         cosmo = new Cosmo(atlas, bulletPool, explosionPool, worldBounds);
         sprites.add(cosmo);
         toDispose.add(cosmo);
+
+        for (int i = 0; i < STAR_COUNT; i++) {
+            sprites.add(new TrackingStar(atlas, cosmo.getV()));
+//            sprites.add(new Star(atlas));
+        }
+
+        gameOverMessage = new GameOverMessage(atlas);
+        gameOverMessage.destroy();
+        sprites.add(gameOverMessage);
+
+        newGameButton = new NewGameButton(atlas, this);
+        newGameButton.destroy();
+        sprites.add(newGameButton);
+
+        font = new Font("font/font.fnt", "font/font.png");
+        font.setSize(FONT_SIZE);
+        sbFrags = new StringBuilder();
+        sbHp = new StringBuilder();
+        sbLevel = new StringBuilder();
     }
 
     public void startGame() {
@@ -83,6 +106,7 @@ public class GameScreen extends BaseScreen {
         newGameButton.destroy();
         cosmo.loadDefaults();
         exitTimer = 0f;
+        frags = 0;
     }
 
     @Override
@@ -117,7 +141,9 @@ public class GameScreen extends BaseScreen {
     public boolean keyDown(int keycode) {
         for (Sprite s: sprites
         ) {
-            s.keyDown(keycode);
+            if (!s.isDestroyed()) {
+                s.keyDown(keycode);
+            }
         }
         return super.keyDown(keycode);
     }
@@ -126,7 +152,9 @@ public class GameScreen extends BaseScreen {
     public boolean keyUp(int keycode) {
         for (Sprite s: sprites
         ) {
-            s.keyUp(keycode);
+            if (!s.isDestroyed()) {
+                s.keyUp(keycode);
+            }
         }
         return super.keyUp(keycode);
     }
@@ -135,7 +163,9 @@ public class GameScreen extends BaseScreen {
     public boolean touchDown(Vector2 touch, int pointer, int button) {
         for (Sprite s: sprites
         ) {
-            s.touchDown(touch, pointer, button);
+            if (!s.isDestroyed()) {
+                s.touchDown(touch, pointer, button);
+            }
         }
         return super.touchDown(touch, pointer, button);
     }
@@ -144,7 +174,9 @@ public class GameScreen extends BaseScreen {
     public boolean touchUp(Vector2 touch, int pointer, int button) {
         for (Sprite s: sprites
         ) {
-            s.touchUp(touch, pointer, button);
+            if (!s.isDestroyed()) {
+                s.touchUp(touch, pointer, button);
+            }
         }
         return super.touchUp(touch, pointer, button);
     }
@@ -156,6 +188,7 @@ public class GameScreen extends BaseScreen {
                 s.update(delta);
             }
         }
+        enemyShipPool.updateActiveSprites(delta);
         if (cosmo.getHp() <= 0) {
             enemyShipPool.dispose();
             bulletPool.dispose();
@@ -165,9 +198,8 @@ public class GameScreen extends BaseScreen {
                 newGameButton.flushDestroy();
             }
         } else {
-            enemyEmitter.generate(delta);
+            enemyEmitter.generate(delta, frags);
         }
-        enemyShipPool.updateActiveSprites(delta);
         bulletPool.updateActiveSprites(delta);
         explosionPool.updateActiveSprites(delta);
     }
@@ -215,6 +247,9 @@ public class GameScreen extends BaseScreen {
                     if (enemyShip.isBulletCollision(bullet)){
                         bullet.destroy();
                         enemyShip.damage(cosmo.getBulletDamage());
+                        if (enemyShip.isDestroyed()) {
+                            frags ++;
+                        }
                         break;
                     }
                 }
@@ -233,6 +268,16 @@ public class GameScreen extends BaseScreen {
         enemyShipPool.drawActiveSprites(batch);
         bulletPool.drawActiveSprites(batch);
         explosionPool.drawActiveSprites(batch);
+        printInfo();
         batch.end();
+    }
+
+    private void printInfo() {
+        sbFrags.setLength(0);
+        font.draw(batch, sbFrags.append(FRAGS).append(frags), worldBounds.getLeft() + MARGIN, worldBounds.getTop() - MARGIN);
+        sbHp.setLength(0);
+        font.draw(batch, sbHp.append(HP).append(cosmo.getHp()), worldBounds.pos.x, worldBounds.getTop() - MARGIN, Align.center);
+        sbLevel.setLength(0);
+        font.draw(batch, sbLevel.append(LEVEL).append(enemyEmitter.getLevel()), worldBounds.getRight() - MARGIN, worldBounds.getTop() - MARGIN, Align.right);
     }
 }

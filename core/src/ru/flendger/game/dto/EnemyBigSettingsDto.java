@@ -28,4 +28,9 @@ public class EnemyBigSettingsDto extends EnemySettingsDto {
         setHeight(ENEMY_BIG_HEIGHT);
         setHp(ENEMY_BIG_HP);
     }
+
+    @Override
+    public void setDamageForLevel(int level) {
+        setDamage(ENEMY_BIG_DAMAGE * level);
+    }
 }

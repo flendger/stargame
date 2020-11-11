@@ -143,6 +143,10 @@ public class Cosmo extends BaseShip {
         pos.set(0, worldBounds.getBottom()+getHalfHeight());
     }
 
+    public Vector2 getV() {
+        return v;
+    }
+
     @Override
     public void loadDefaults() {
         super.loadDefaults();
@@ -154,7 +158,7 @@ public class Cosmo extends BaseShip {
         bulletV.set(0, 0.5f);
         bulletDamage = 1;
         bulletHeight = 0.01f;
-        hp = 30;
+        hp = 3;
         setStartPosition();
         flushDestroy();
     }

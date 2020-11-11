@@ -26,6 +26,8 @@ public class EnemyEmitter implements Disposable {
     private final EnemySettingsDto enemyMediumSettingsDto;
     private final EnemySettingsDto enemyBigSettingsDto;
 
+    private int level = 1;
+
     public EnemyEmitter(TextureAtlas atlas, EnemyShipPool enemyShipPool, Rect worldBounds) {
         this.enemyShipPool = enemyShipPool;
         this.bulletSound = Gdx.audio.newSound(Gdx.files.internal("sounds/bullet.wav"));
@@ -36,17 +38,21 @@ public class EnemyEmitter implements Disposable {
         enemyBigSettingsDto = new EnemyBigSettingsDto(atlas, bulletSound);
     }
 
-    public void generate(float delta) {
+    public void generate(float delta, int frags) {
+        level = frags / 10 + 1;
         generateTimer += delta;
         if (generateTimer >= GENERATE_INTERVAL) {
             generateTimer = 0;
             EnemyShip enemyShip = enemyShipPool.obtain();
             float type = (float) Math.random();
             if (type < 0.5f) {
+                enemySmallSettingsDto.setDamageForLevel(level);
                 enemyShip.set(enemySmallSettingsDto);
             } else if (type < 0.8f) {
+                enemyMediumSettingsDto.setDamageForLevel(level);
                 enemyShip.set(enemyMediumSettingsDto);
             } else {
+                enemyBigSettingsDto.setDamageForLevel(level);
                 enemyShip.set(enemyBigSettingsDto);
             }
 
@@ -58,5 +64,9 @@ public class EnemyEmitter implements Disposable {
     @Override
     public void dispose() {
         bulletSound.dispose();
+    }
+
+    public int getLevel() {
+        return level;
     }
 }
